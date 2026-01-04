@@ -3,6 +3,7 @@ import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoint
 
 ///interfaces
 import { ItemLista } from "../interfaces/notion.interface";
+import { getFromCache, saveToCache } from "../services/cache.service";
 
 let notion: Client;
 
@@ -19,52 +20,125 @@ function getNotionClient(): Client {
   return notion;
 }
 
+/**
+ * Obtiene datos directamente de la API de Notion (sin caché)
+ */
+async function fetchFromNotion(eItem: string): Promise<ItemLista[]> {
+  const dbFinal = process.env[eItem];
+  console.log(`[Notion API] Fetching ${eItem}, DB ID: ${dbFinal}`);
+
+  if (!dbFinal) {
+    throw new Error(`Environment variable ${eItem} is not defined`);
+  }
+
+  const notionClient = getNotionClient();
+
+  const response = await notionClient.request<{
+    results: PageObjectResponse[];
+  }>({
+    path: `databases/${dbFinal}/query`,
+    method: "post",
+  });
+
+  console.log(
+    `[Notion API] Got ${response.results.length} results for ${eItem}`,
+  );
+
+  return response.results.map((page: PageObjectResponse) => {
+    const properties = page.properties;
+
+    // Buscar la propiedad de título (puede ser "Nombre" o "Título")
+    const nombreProp = (properties["Nombre"] || properties["Título"]) as
+      | {
+          type: "title";
+          title: Array<{ plain_text: string }>;
+        }
+      | undefined;
+
+    // Buscar la propiedad de destino (puede ser "Destino" o "Link")
+    const destinoProp = (properties["Destino"] || properties["Link"]) as
+      | {
+          type: "url";
+          url: string | null;
+        }
+      | undefined;
+
+    const iconoProp = properties["Icono"] as
+      | {
+          type?: "rich_text";
+          rich_text?: Array<{ plain_text: string }>;
+        }
+      | undefined;
+
+    const imagenProp = properties["Imagen"] as
+      | {
+          type: "url";
+          url: string | null;
+        }
+      | undefined;
+
+    const descripcionProp = properties["Descripción"] as
+      | {
+          type: "rich_text";
+          rich_text: Array<{ plain_text: string }>;
+        }
+      | undefined;
+
+    const fechaProp = properties["Fecha"] as
+      | {
+          type: "date";
+          date: { start: string } | null;
+        }
+      | undefined;
+
+    const textobotonProp = properties["Botón"] as
+      | {
+          type: "rich_text";
+          rich_text: Array<{ plain_text: string }>;
+        }
+      | undefined;
+
+    return {
+      name: nombreProp?.title?.[0]?.plain_text || "",
+      destino: destinoProp?.url || undefined,
+      pageId: destinoProp?.url ? undefined : page.id,
+      icono: iconoProp?.rich_text?.map((t) => t.plain_text).join("") || "",
+      imagen: imagenProp?.url || undefined,
+      descripcion:
+        descripcionProp?.rich_text?.map((t) => t.plain_text).join("") ||
+        undefined,
+      fecha: fechaProp?.date?.start
+        ? new Date(fechaProp.date.start)
+        : undefined,
+      textoboton:
+        textobotonProp?.rich_text?.map((t) => t.plain_text).join("") ||
+        undefined,
+    };
+  });
+}
+
 // GenItemLista : genera los items de las listas de la app
-//
+// Usa caché para no saturar la API de Notion (TTL: 60 minutos)
 //
 export async function getListaMenu(eItem: string): Promise<ItemLista[]> {
   try {
-    const dbFinal = process.env[eItem];
+    // Primero intentar obtener del caché
+    const cachedData = getFromCache(eItem);
 
-    if (!dbFinal) {
-      throw new Error(`Environment variable ${eItem} is not defined`);
+    if (cachedData !== null) {
+      // Datos válidos en caché, devolverlos
+      return cachedData;
     }
 
-    const notionClient = getNotionClient();
+    // No hay caché válido, obtener de Notion
+    const freshData = await fetchFromNotion(eItem);
 
-    // Usando request directamente para evitar problemas de tipos con la versión antigua de la API
-    const response = await notionClient.request<{
-      results: PageObjectResponse[];
-    }>({
-      path: `databases/${dbFinal}/query`,
-      method: "post",
-    });
+    // Guardar en caché para próximas peticiones
+    saveToCache(eItem, freshData);
 
-    return response.results.map((page: PageObjectResponse) => {
-      const properties = page.properties;
-
-      const nombreProp = properties["Nombre"] as {
-        type: "title";
-        title: Array<{ plain_text: string }>;
-      };
-      const destinoProp = properties["Destino"] as {
-        type: "url";
-        url: string | null;
-      };
-      const iconoProp = properties["Icono"] as {
-        type?: "rich_text";
-        rich_text?: Array<{ plain_text: string }>;
-      };
-
-      return {
-        name: nombreProp.title[0]?.plain_text || "",
-        destino: destinoProp.url || undefined,
-        pageId: destinoProp.url ? undefined : page.id,
-        icono: iconoProp?.rich_text?.map((t) => t.plain_text).join("") || "",
-      };
-    });
+    return freshData;
   } catch (error) {
-    console.error("Error fetching Escuela items:", error);
+    console.error(`Error fetching ${eItem} items:`, error);
     return [];
   }
 }
