@@ -1,5 +1,4 @@
-FROM node:20-alpine
-
+FROM --platform=linux/amd64 node:20-alpine
 WORKDIR /app
 
 # Copiar package.json y package-lock.json
