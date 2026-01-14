@@ -1,8 +1,22 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
+import cors from "cors";
 import apiRoutes, { setupCacheRoutes } from "./apiRoutes";
 
 const app = express();
+
+// Configuración CORS
+const allowedOrigins = [
+  "https://beta.aedm.org.es",
+  "https://aedm.org.es",
+  "http://localhost:3000",
+];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+  }),
+);
 const port = 8000;
 
 app.get("/", (req: Request, res: Response) => {
