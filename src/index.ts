@@ -27,13 +27,19 @@ app.get("/health", (req: Request, res: Response) => {
   res.send("OK");
 });
 
-
 app.get("/ver", (req: Request, res: Response) => {
   res.send(
     JSON.stringify({
-      commit: require('child_process').execSync('git rev-parse HEAD').toString().trim(),
-      date: require('child_process').execSync('git log -1 --format=%ci').toString().trim(),
-    })
+      commit: require("child_process")
+        .execSync("git rev-parse HEAD")
+        .toString()
+        .trim(),
+      date: require("child_process")
+        .execSync("git log -1 --format=%ci")
+        .toString()
+        .trim(),
+    }),
+  );
 });
 
 console.log(
