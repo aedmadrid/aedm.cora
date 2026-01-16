@@ -7,7 +7,6 @@ Si quieres usar este api, puedes experimentar con localhost:3000 en tu máquina.
 
 ## Setup (no necesitas hacer esto si no mantienes este api)
 Clona el repositorio y ejecuta `npm install` para instalar las dependencias.
-Configura el cors (index.ts)
 Construye el dockerfile y sube la imagen.
 ```
 docker buildx build --platform linux/amd64 -t ghcr.io/aedmadrid/aedm.cora:latest --push .

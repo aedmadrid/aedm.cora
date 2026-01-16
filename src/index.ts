@@ -1,7 +1,10 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
 import cors from "cors";
-import apiRoutes, { setupCacheRoutes } from "./apiRoutes";
+import apiRoutes, {
+  setupCacheRoutes,
+  setupNotionPageRoutes,
+} from "./apiRoutes";
 
 const app = express();
 
@@ -94,9 +97,13 @@ apiRoutes(app, "ACTIVIDADES_DB");
 apiRoutes(app, "AEDM_DB");
 apiRoutes(app, "ESCUELA_DB");
 apiRoutes(app, "INICIO_DB");
+apiRoutes(app, "PROYECTOS_DB");
 
 // Rutas de administración del caché
 setupCacheRoutes(app);
+
+// Rutas de páginas de Notion
+setupNotionPageRoutes(app);
 
 app.listen(port, () => {
   console.log(`El (cora)zon late en http://localhost:${port}`);
@@ -107,6 +114,7 @@ app.listen(port, () => {
   console.log(`  - GET /{DB}.json/refresh → Fuerza recarga desde Notion`);
   console.log(`  - GET /cache/stats       → Ver estadísticas del caché`);
   console.log(`  - GET /cache/clear       → Limpiar todo el caché`);
+  console.log(`  - GET /id/{id}.json      → Obtiene página de Notion en JSON`);
 });
 
 export default app;

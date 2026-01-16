@@ -1,8 +1,10 @@
 import { Express, Request, Response } from "express";
 import { getListaMenu } from "./functions/notion.function";
+import { getNotionPageJson } from "./functions/notionPage.function";
 import {
   getCacheStats,
   invalidateCache,
+  invalidatePageCache,
   clearCache,
 } from "./services/cache.service";
 
@@ -42,5 +44,42 @@ export function setupCacheRoutes(app: Express) {
   app.get("/cache/clear", (req: Request, res: Response) => {
     clearCache();
     res.json({ message: "Caché completamente limpiado" });
+  });
+}
+
+// Endpoint para obtener una página de Notion en formato JSON
+export function setupNotionPageRoutes(app: Express) {
+  app.get("/id/:id.json", (req: Request, res: Response) => {
+    (async () => {
+      try {
+        const pageId = req.params.id;
+        console.log(`[API] Obteniendo página de Notion: ${pageId}`);
+        const pageData = await getNotionPageJson(pageId);
+        res.json(pageData);
+      } catch (error) {
+        console.error("[API] Error obteniendo página:", error);
+        res.status(500).json({ error: "Error al obtener la página" });
+      }
+    })();
+  });
+
+  // Endpoint para forzar recarga de una página desde Notion
+  app.get("/id/:id.json/refresh", (req: Request, res: Response) => {
+    (async () => {
+      try {
+        const pageId = req.params.id;
+        console.log(`[API] Forzando recarga de página: ${pageId}`);
+        invalidatePageCache(pageId);
+        const pageData = await getNotionPageJson(pageId);
+        res.json({
+          message: `Cache de página ${pageId} actualizado`,
+          blockCount: pageData.blocks.length,
+          data: pageData,
+        });
+      } catch (error) {
+        console.error("[API] Error recargando página:", error);
+        res.status(500).json({ error: "Error al recargar la página" });
+      }
+    })();
   });
 }
