@@ -89,6 +89,14 @@ function processBlock(block: any): NotionBlock | null {
     };
   }
 
+  if ("numbered_list_item" in block) {
+    return {
+      id,
+      type: "numbered_list_item",
+      rich_text: processRichText(block.numbered_list_item.rich_text),
+    };
+  }
+
   if ("to_do" in block) {
     return {
       id,

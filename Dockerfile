@@ -15,6 +15,7 @@ RUN npm run build
 
 # Exponer el puerto (cambia según tu app)
 EXPOSE 8000
+EXPOSE 8001
 
 # Comando para iniciar
 CMD ["node", "dist/index.js"]

@@ -3,12 +3,13 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import apiRoutes, {
   setupCacheRoutes,
+  setupCacheStatsRoutes,
   setupNotionPageRoutes,
 } from "./apiRoutes";
 
 const app = express();
+const adminApp = express();
 
-// Configuración CORS
 const allowedOrigins = [
   "https://beta.aedm.org.es",
   "https://aedm.org.es",
@@ -20,7 +21,11 @@ app.use(
     origin: allowedOrigins,
   }),
 );
+
+adminApp.use(cors());
+
 const port = 8000;
+const adminPort = 8080;
 
 app.get("/", (req: Request, res: Response) => {
   res.send("aedm.Cora <3");
@@ -99,22 +104,28 @@ apiRoutes(app, "ESCUELA_DB");
 apiRoutes(app, "INICIO_DB");
 apiRoutes(app, "PROYECTOS_DB");
 
-// Rutas de administración del caché
-setupCacheRoutes(app);
-
 // Rutas de páginas de Notion
 setupNotionPageRoutes(app);
+
+// Rutas de caché por DB (puerto admin)
+const dbs = ["WEB_DB", "ACTIVIDADES_DB", "AEDM_DB", "ESCUELA_DB", "INICIO_DB", "PROYECTOS_DB"];
+dbs.forEach((DB) => setupCacheRoutes(adminApp, DB));
+
+// Rutas globales de caché (puerto admin)
+setupCacheStatsRoutes(adminApp);
 
 app.listen(port, () => {
   console.log(`El (cora)zon late en http://localhost:${port}`);
   console.log(`\nEndpoints disponibles:`);
-  console.log(
-    `  - GET /{DB}.json         → Obtiene datos (desde caché si < 60 min)`,
-  );
+  console.log(`  - GET /{DB}.json         → Obtiene datos (desde caché si < 60 min)`);
+  console.log(`  - GET /id/{id}.json      → Obtiene página de Notion en JSON`);
+});
+
+adminApp.listen(adminPort, () => {
+  console.log(`\n🔧 Admin endpoints (solo red local) en http://localhost:${adminPort}`);
   console.log(`  - GET /{DB}.json/refresh → Fuerza recarga desde Notion`);
   console.log(`  - GET /cache/stats       → Ver estadísticas del caché`);
   console.log(`  - GET /cache/clear       → Limpiar todo el caché`);
-  console.log(`  - GET /id/{id}.json      → Obtiene página de Notion en JSON`);
 });
 
 export default app;

@@ -18,6 +18,7 @@ export type BlockType =
   | "heading_2"
   | "heading_3"
   | "bulleted_list_item"
+  | "numbered_list_item"
   | "to_do"
   | "quote"
   | "bookmark"
@@ -56,6 +57,11 @@ export interface Heading3Block extends BaseBlock {
 
 export interface BulletedListItemBlock extends BaseBlock {
   type: "bulleted_list_item";
+  rich_text: RichTextItem[];
+}
+
+export interface NumberedListItemBlock extends BaseBlock {
+  type: "numbered_list_item";
   rich_text: RichTextItem[];
 }
 
@@ -108,6 +114,7 @@ export type NotionBlock =
   | Heading2Block
   | Heading3Block
   | BulletedListItemBlock
+  | NumberedListItemBlock
   | ToDoBlock
   | QuoteBlock
   | BookmarkBlock
