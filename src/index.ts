@@ -24,8 +24,8 @@ app.use(
 
 adminApp.use(cors());
 
-const port = 8000;
-const adminPort = 8080;
+const port = process.env.PORT || 8000;
+const adminPort = process.env.ADMIN_PORT || 8080;
 
 app.get("/", (req: Request, res: Response) => {
   res.send("aedm.Cora <3");
@@ -108,7 +108,14 @@ apiRoutes(app, "PROYECTOS_DB");
 setupNotionPageRoutes(app);
 
 // Rutas de caché por DB (puerto admin)
-const dbs = ["WEB_DB", "ACTIVIDADES_DB", "AEDM_DB", "ESCUELA_DB", "INICIO_DB", "PROYECTOS_DB"];
+const dbs = [
+  "WEB_DB",
+  "ACTIVIDADES_DB",
+  "AEDM_DB",
+  "ESCUELA_DB",
+  "INICIO_DB",
+  "PROYECTOS_DB",
+];
 dbs.forEach((DB) => setupCacheRoutes(adminApp, DB));
 
 // Rutas globales de caché (puerto admin)
@@ -117,12 +124,16 @@ setupCacheStatsRoutes(adminApp);
 app.listen(port, () => {
   console.log(`El (cora)zon late en http://localhost:${port}`);
   console.log(`\nEndpoints disponibles:`);
-  console.log(`  - GET /{DB}.json         → Obtiene datos (desde caché si < 60 min)`);
+  console.log(
+    `  - GET /{DB}.json         → Obtiene datos (desde caché si < 60 min)`,
+  );
   console.log(`  - GET /id/{id}.json      → Obtiene página de Notion en JSON`);
 });
 
 adminApp.listen(adminPort, () => {
-  console.log(`\n🔧 Admin endpoints (solo red local) en http://localhost:${adminPort}`);
+  console.log(
+    `\n🔧 Admin endpoints (solo red local) en http://localhost:${adminPort}`,
+  );
   console.log(`  - GET /{DB}.json/refresh → Fuerza recarga desde Notion`);
   console.log(`  - GET /cache/stats       → Ver estadísticas del caché`);
   console.log(`  - GET /cache/clear       → Limpiar todo el caché`);
