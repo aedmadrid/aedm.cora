@@ -4,8 +4,8 @@ WORKDIR /app
 # Copiar package.json y package-lock.json
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm ci --only=production
+# Instalar dependencias (incluye devDependencies: @types/* y typescript son necesarios para compilar)
+RUN npm ci
 
 # Copiar el código fuente
 COPY . .
@@ -15,7 +15,7 @@ RUN npm run build
 
 # Exponer el puerto (cambia según tu app)
 EXPOSE 8000
-EXPOSE 8001
+EXPOSE 8080
 
 # Comando para iniciar
 CMD ["node", "dist/index.js"]
