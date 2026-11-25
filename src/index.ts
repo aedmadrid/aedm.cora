@@ -5,6 +5,7 @@ import apiRoutes, {
   setupCacheRoutes,
   setupCacheStatsRoutes,
   setupNotionPageRoutes,
+  setupMediaRoutes,
 } from "./apiRoutes";
 
 const app = express();
@@ -107,6 +108,9 @@ apiRoutes(app, "PROYECTOS_DB");
 // Rutas de páginas de Notion
 setupNotionPageRoutes(app);
 
+// Rutas de ficheros (imágenes, vídeos, adjuntos) con URL estable
+setupMediaRoutes(app);
+
 // Rutas de caché por DB (puerto admin)
 const dbs = [
   "WEB_DB",
@@ -128,6 +132,9 @@ app.listen(port, () => {
     `  - GET /{DB}.json         → Obtiene datos (desde caché si < 60 min)`,
   );
   console.log(`  - GET /id/{id}.json      → Obtiene página de Notion en JSON`);
+  console.log(
+    `  - GET /media/{blockId}   → Sirve una imagen/fichero (URL estable, no caduca)`,
+  );
 });
 
 adminApp.listen(adminPort, () => {

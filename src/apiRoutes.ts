@@ -1,6 +1,7 @@
 import { Express, Request, Response } from "express";
 import { getListaMenu } from "./functions/notion.function";
 import { getNotionPageJson } from "./functions/notionPage.function";
+import { mediaHandler } from "./functions/media.function";
 import {
   getCacheStats,
   invalidateCache,
@@ -78,5 +79,17 @@ export function setupNotionPageRoutes(app: Express) {
         res.status(500).json({ error: "Error al recargar la página" });
       }
     })();
+  });
+}
+
+// Endpoint estable para los ficheros (imágenes, vídeos, adjuntos) de Notion.
+// Sustituye a las URLs firmadas de Notion, que caducan a la hora.
+export function setupMediaRoutes(app: Express) {
+  app.get("/media/:id", (req: Request, res: Response) => {
+    void mediaHandler(req, res);
+  });
+
+  app.get("/img/:id", (req: Request, res: Response) => {
+    void mediaHandler(req, res);
   });
 }
